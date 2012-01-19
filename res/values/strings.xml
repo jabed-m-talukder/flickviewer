@@ -2,4 +2,9 @@
 <resources>
     <string name="hello">Hello World, JustCheck!</string>
     <string name="app_name">JustCheck</string>
+    <string name="btnUpdate">Click me</string>
+    <string name="titleTest">Good JOb</string>
+    <string name="titleFlick">FlickViewer</string>    
+    <string name="btnSearchText">Search</string>
+    <string name="fullscreen_desc">Big Image</string>      
 </resources>
