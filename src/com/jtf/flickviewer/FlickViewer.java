@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import android.util.Log;
@@ -52,13 +53,17 @@ public class FlickViewer extends Activity{
 	final private static String IMAGE_SIZE_SMALL="s";
 	final private static String IMAGE_SIZE_TUMB="t";
 	final private static String IMAGE_SIZE_MED="m";
+	final private static String IMAGE_SIZE_BIG="z";
+	final private static String IMAGE_SIZE_FULL="b";
+	final private static String IMAGE_SIZE_ORIG="b";
+	
 	final private String TAG = "FlickViewer";
 	// for contain the image link and drawable objects
 	final private Map<Integer, String> drawableMap = new HashMap<Integer, String>();
     private Vector<Object> v;
 	
 	private static int noOfPage=1;
-	final private int noOfImage=16;
+	final private int noOfImage=20;
 	private GridView grdView;
 	
     @Override
@@ -88,7 +93,7 @@ public class FlickViewer extends Activity{
         		String strUserID = searchFlickr(strUserName); 
 //        		txtUserName.setText(strUserID);
         		getImageList(strUserID);
-        		grdView.setAdapter(new ImageAdapter(FlickViewer.this));
+        		grdView.setAdapter(new ImageAdapter(getApplicationContext()));
         		//grdView.	        		
         	}        	
         }        
@@ -162,6 +167,7 @@ public class FlickViewer extends Activity{
     		HttpURLConnection httpConn = (HttpURLConnection)conn;
     		    		
     		int responseCode= httpConn.getResponseCode();
+    		Log.i(TAG, "httpConn.getResponseCode()" + responseCode);
     		if(HttpURLConnection.HTTP_OK == responseCode){
     			InputStream in = httpConn.getInputStream();
     			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -242,9 +248,6 @@ public class FlickViewer extends Activity{
     		    							+ IMAGE_SIZE_TUMB
     		    							+ ".jpg";
     		    		
-    		    		Drawable drawable = Drawable.createFromStream(fetch(photoLink), "src");
-    		    		v.add(drawable);
-    		    		
     		    		String bigPhotoLink = "http://farm" 
 							+ farm_id
 							+ ".static.flickr.com/"
@@ -254,11 +257,14 @@ public class FlickViewer extends Activity{
 							+ "_"
 							+ secret
 							+ "_"
-							+ IMAGE_SIZE_MED
+							+ IMAGE_SIZE_FULL
 							+ ".jpg";
-    		    		
+    		    		  		    		    		    		
+    		    		InputStream is = new ImageDownloader().execute(photoLink).get();
+    		    		Drawable drawable = Drawable.createFromStream(is, "src");
+    		    		v.add(drawable);
     		    		drawableMap.put(i, bigPhotoLink);
-    		    		Log.i(TAG, "key" + i + "bigPhotoLink" + bigPhotoLink);
+    		    		grdView.invalidate();
     		    	}
     		    }
     		       		       		    
@@ -274,6 +280,35 @@ public class FlickViewer extends Activity{
     	//Get the images and update the grid
         
         
+    }
+    
+    class ImageDownloader extends AsyncTask<String, Integer, InputStream> {
+
+		@Override
+		protected InputStream doInBackground(String... params) {
+			try{
+				InputStream is = fetch(params[0]);
+				return is;				
+			}catch (MalformedURLException e) {
+				Log.e(TAG, e.toString());
+				return null;
+			}catch (Exception e) {
+				Log.e(TAG, e.toString());
+				return null;
+			}			
+		}
+		
+		protected void onProgressUpdate(Integer... values) { //
+				super.onProgressUpdate(values);
+			}
+			// Called once the background activity has completed
+			@Override
+		protected void onPostExecute(InputStream result) { //
+//	    		Drawable drawable = Drawable.createFromStream(result, "src");
+//	    		v.add(drawable);
+//	    		grdView.setAdapter(new ImageAdapter(getApplicationContext()));
+			}
+    	
     }
     
     public InputStream fetch(String urlString) throws MalformedURLException, IOException {
@@ -309,7 +344,7 @@ public class FlickViewer extends Activity{
             if (convertView == null) {
                 imageView = new ImageView(mContext);
                 imageView.setLayoutParams(new GridView.LayoutParams(60, 60));
-                imageView.setAdjustViewBounds(false);
+                imageView.setAdjustViewBounds(true);
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 imageView.setPadding(8, 8, 8, 8);
             } else {
